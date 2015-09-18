@@ -207,14 +207,20 @@ class User(UserMixin, db.Model):
         db.session.add(self)
 
     def gravatar(self, size=100, default='identicon', rating='g'):
-        if request.is_secure:
-            url = 'http://cn.gravatar.com/avatar'
+        # if request.is_secure:
+        #     url = 'http://cn.gravatar.com/avatar'
+        # else:
+        #     url = 'http://cn.gravatar.com/avatar'
+        # hash = self.avatar_hash or hashlib.md5(
+        #     self.email.encode('utf-8')).hexdigest()
+        # return '{url}/{hash}?s={size}&d={default}&r={rating}'.format(
+        #     url=url, hash=hash, size=size, default=default, rating=rating)
+        from random import randint
+        n = randint(0, 9)
+        if size >= 100:
+            return url_for('static', filename='%s.png' % n)
         else:
-            url = 'http://cn.gravatar.com/avatar'
-        hash = self.avatar_hash or hashlib.md5(
-            self.email.encode('utf-8')).hexdigest()
-        return '{url}/{hash}?s={size}&d={default}&r={rating}'.format(
-            url=url, hash=hash, size=size, default=default, rating=rating)
+            return url_for('static', filename='%s%s.png' % (n, n))
 
     def follow(self, user):
         if not self.is_following(user):
