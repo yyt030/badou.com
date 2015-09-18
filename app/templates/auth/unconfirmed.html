@@ -1,20 +1,19 @@
 {% extends "base.html" %}
 
-{% block title %}八斗 - Confirm your accont{% endblock %}
+{% block title %}八斗 - 确认{% endblock %}
 
 {% block page_content %}
 <div class="page-header">
     <h1>
         Hello, {{ current_user.username }}!
     </h1>
-    <h3>You have not confirmed your account yet.</h3>
+    <h3>你的账号还没有确认</h3>
     <p>
-        Before you can access this site you need to confirm your account.
-        Check your inbox, you should have received an email with a confirmation link.
+        检查邮箱，先访问邮件中的链接，确认账户
     </p>
     <p>
-        Need another confirmation email?
-        <a href="{{ url_for('auth.resend_confirmation') }}">Click here</a>
+        需要重发确认链接吗?
+        <a href="{{ url_for('auth.resend_confirmation') }}">发送</a>
     </p>
 </div>
 {% endblock %}
