@@ -8,6 +8,7 @@ from flask import current_app, request, url_for
 from flask.ext.login import UserMixin, AnonymousUserMixin
 from app.exceptions import ValidationError
 from . import db, login_manager
+from random import randint
 
 
 class Permission:
@@ -215,12 +216,13 @@ class User(UserMixin, db.Model):
         #     self.email.encode('utf-8')).hexdigest()
         # return '{url}/{hash}?s={size}&d={default}&r={rating}'.format(
         #     url=url, hash=hash, size=size, default=default, rating=rating)
-        from random import randint
         n = randint(0, 9)
         if size >= 100:
-            return url_for('static', filename='%s.png' % n)
+            return url_for('static', filename='pic/%s.png' % n)
+        elif size == 16:
+            return url_for('static', filename='pic/000.png')
         else:
-            return url_for('static', filename='%s%s.png' % (n, n))
+            return url_for('static', filename='pic/%s%s.png' % (n, n))
 
     def follow(self, user):
         if not self.is_following(user):
@@ -300,6 +302,7 @@ class Post(db.Model):
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     comments = db.relationship('Comment', backref='post', lazy='dynamic')
+    topicmapping = db.relationship('TopicMapping', backref='posts', lazy='dynamic')
 
     @staticmethod
     def generate_fake(count=100):
@@ -389,3 +392,19 @@ class Comment(db.Model):
 
 
 db.event.listen(Comment.body, 'set', Comment.on_changed_body)
+
+
+class Topic(db.Model):
+    __tablename__ = 'topics'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String)
+    add_time = db.Column(db.Integer)
+
+
+class TopicMapping(db.Model):
+    __tablename__ = 'topic_mapping'
+    id = db.Column(db.Integer, primary_key=True)
+    post_id = db.Column(db.Integer, db.ForeignKey('posts.id'))
+
+    topic_id = db.Column(db.Integer, db.ForeignKey('topics.id'))
+    topics = db.relationship('Topic', backref='topicmapping', uselist=False)

@@ -2,20 +2,89 @@
 {% import "bootstrap/wtf.html" as wtf %}
 {% import "_macros.html" as macros %}
 
-{% block title %}八斗 - Post{% endblock %}
+{% block title %}八斗 - 问题详情{% endblock %}
 
 {% block page_content %}
     {% include '_posts.html' %}
-    <h4 id="comments">回答</h4>
-    {% if current_user.can(Permission.COMMENT) %}
-        <div class="comment-form">
-            {{ wtf.quick_form(form) }}
+    <h4 id="comments">{{ posts[0].comments.count() }}个回答</h4>
+    {% include '_comments.html' %}
+    {% if current_user.can(Permission.WRITE_ARTICLES) %}
+        <div class="col-xs-12 col-mb-9 main">
+            <form class="form form-group-lg" method="post" action="/">>
+                <div class="form-group">
+                    <label for="name">回复：</label>
+                    {% include '_editor.html' %}
+                </div>
+                <div class="form-actions">
+                    <button name="action_save" type="submit" class="btn btn-primary">提交回复</button>
+                </div>
+            </form>
         </div>
     {% endif %}
-    {% include '_comments.html' %}
+
     {% if pagination %}
         <div class="pagination">
             {{ macros.pagination_widget(pagination, '.post', fragment='#comments', id=posts[0].id) }}
         </div>
     {% endif %}
 {% endblock %}
+
+{% if current_user.can(Permission.WRITE_ARTICLES) %}
+    {% block scripts %}
+        {{ super() }}
+        <script src="/static/js/bootstrap-wysiwyg.js" type="text/javascript"></script>
+        <script src="/static/js/external/jquery.hotkeys.js" type="text/javascript"></script>
+        <script>
+            $(function () {
+                function initToolbarBootstrapBindings() {
+                    var fonts = ['Serif', 'Sans', 'Arial', 'Arial Black', 'Courier',
+                                'Courier New', 'Comic Sans MS', 'Helvetica', 'Impact', 'Lucida Grande', 'Lucida Sans', 'Tahoma', 'Times',
+                                'Times New Roman', 'Verdana'],
+                            fontTarget = $('[title=Font]').siblings('.dropdown-menu');
+                    $.each(fonts, function (idx, fontName) {
+                        fontTarget.append($('<li><a data-edit="fontName ' + fontName + '" style="font-family:\'' + fontName + '\'">' + fontName + '</a></li>'));
+                    });
+                    $('a[title]').tooltip({container: 'body'});
+                    $('.dropdown-menu input').click(function () {
+                        return false;
+                    })
+                            .change(function () {
+                                $(this).parent('.dropdown-menu').siblings('.dropdown-toggle').dropdown('toggle');
+                            })
+                            .keydown('esc', function () {
+                                this.value = '';
+                                $(this).change();
+                            });
+
+
+                    $('[data-role=magic-overlay]').each(function () {
+                        var overlay = $(this), target = $(overlay.data('target'));
+                        overlay.css('opacity', 0).css('position', 'absolute').offset(target.offset()).width(target.outerWidth()).height(target.outerHeight());
+                    });
+                    if ("onwebkitspeechchange"  in document.createElement("input")) {
+                        var editorOffset = $('#editor').offset();
+                        $('#voiceBtn').css('position', 'absolute').offset({
+                            top: editorOffset.top,
+                            left: editorOffset.left + $('#editor').innerWidth() - 35
+                        });
+                    } else {
+                        $('#voiceBtn').hide();
+                    }
+                };
+                function showErrorAlert(reason, detail) {
+                    var msg = '';
+                    if (reason === 'unsupported-file-type') {
+                        msg = "Unsupported format " + detail;
+                    }
+                    else {
+                        console.log("error uploading file", reason, detail);
+                    }
+                    $('<div class="alert"> <button type="button" class="close" data-dismiss="alert">&times;</button>' +
+                            '<strong>File upload error</strong> ' + msg + ' </div>').prependTo('#alerts');
+                };
+                initToolbarBootstrapBindings();
+                $('#editor').wysiwyg({fileUploadError: showErrorAlert});
+            });
+        </script>
+    {% endblock %}
+{% endif %}

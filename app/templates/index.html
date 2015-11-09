@@ -5,15 +5,18 @@
 {% block title %}八斗{% endblock %}
 
 {% block page_content %}
-
-    <div>
-        {% if current_user.can(Permission.WRITE_ARTICLES) %}
-            {{ wtf.quick_form(form) }}
-        {% endif %}
+    <div class="col-xs-12 col-mb-9 main">
+        <p class="main-title hidden-xs">
+            今天，你在开发中遇到了什么问题？
+            <a class="btn btn-primary" href="{{ url_for('.ask') }}">我要提问</a>
+        </p>
     </div>
+
     <div class="post-tabs">
-        <ul class="nav nav-tabs">
-            <li{% if not show_followed %} class="active"{% endif %}><a href="{{ url_for('.show_all') }}">全部</a></li>
+        <ul class="nav nav-tabs nav-tabs-zen mb10">
+            <li class="active"><a href="{{ url_for('.index') }}">最新的</a></li>
+            <li><a href="{{ url_for('.index') }}">热门的</a></li>
+            <li><a href="{{ url_for('.index') }}">未回答</a></li>
             {% if current_user.is_authenticated() %}
                 <li{% if show_followed %} class="active"{% endif %}><a
                         href="{{ url_for('.show_followed') }}">关注者</a></li>
@@ -23,7 +26,11 @@
     </div>
     {% if pagination %}
         <div class="pagination">
-            {{ macros.pagination_widget(pagination, '.index') }}
+            {% if search_data %}
+                {{ macros.pagination_widget(pagination, '.search', '&search=%s' %(search_data)) }}
+            {% else %}
+                {{ macros.pagination_widget(pagination, '.index') }}
+            {% endif %}
         </div>
     {% endif %}
 {% endblock %}

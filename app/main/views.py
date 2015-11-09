@@ -1,12 +1,18 @@
-from flask import render_template, redirect, url_for, abort, flash, request,\
+# coding: utf-8
+from flask import render_template, redirect, url_for, abort, flash, request, g, \
     current_app, make_response
 from flask.ext.login import login_required, current_user
 from . import main
-from .forms import EditProfileForm, EditProfileAdminForm, PostForm,\
-    CommentForm
+from .forms import EditProfileForm, EditProfileAdminForm, PostForm, \
+    CommentForm, SearchForm, AskForm
 from .. import db
-from ..models import Permission, Role, User, Post, Comment
+from ..models import Permission, Role, User, Post, Comment, Topic, TopicMapping
 from ..decorators import admin_required, permission_required
+
+
+@main.before_request
+def before_request():
+    g.search_form = SearchForm()
 
 
 @main.route('/', methods=['GET', 'POST'])
@@ -26,12 +32,65 @@ def index():
         query = current_user.followed_posts
     else:
         query = Post.query
+
     pagination = query.order_by(Post.timestamp.desc()).paginate(
         page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'],
         error_out=False)
     posts = pagination.items
-    return render_template('index.html', form=form, posts=posts,
+
+    # list topic
+    topic_query = Topic.query.filter(Topic.id == TopicMapping.topic_id)
+    topic_pagination = topic_query.order_by(Topic.add_time.asc()).paginate(
+        1, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'] * 5,
+        error_out=False)
+    topics = topic_pagination.items
+
+    return render_template('index.html', form=form, search_form=g.search_form, posts=posts, topics=topics,
                            show_followed=show_followed, pagination=pagination)
+
+
+@main.route('/search', methods=['GET', 'POST'])
+def search():
+    form = PostForm()
+    if current_user.can(Permission.WRITE_ARTICLES) and \
+            form.validate_on_submit():
+        post = Post(body=form.body.data,
+                    author=current_user._get_current_object())
+        db.session.add(post)
+        return redirect(url_for('.index'))
+    page = request.args.get('page', 1, type=int)
+    show_followed = False
+    if current_user.is_authenticated():
+        show_followed = bool(request.cookies.get('show_followed', ''))
+    if show_followed:
+        query = current_user.followed_posts
+    else:
+        query = Post.query
+
+    # search key values
+    search_data = g.search_form.search.data
+    if not search_data:
+        search_data = request.args.get('search')
+    if search_data:
+        query = query.filter(Post.body.like('%{0}%'.format(search_data.encode('utf-8'))))
+
+    pagination = query.order_by(Post.timestamp.desc()).paginate(
+        page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'],
+        error_out=False)
+    posts = pagination.items
+    return render_template('index.html', form=form, search_form=g.search_form, search_data=search_data, posts=posts,
+                           show_followed=show_followed, pagination=pagination)
+
+
+@main.route('/topic', methods=['GET', 'POST'])
+def topic():
+    page = request.args.get('page', 1, type=int)
+    query = Topic.query.filter(Topic.id == TopicMapping.topic_id)
+    pagination = query.order_by(Topic.add_time.asc()).paginate(
+        page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'] * 5,
+        error_out=False)
+    topics = pagination.items
+    return render_template('topics.html', topics=topics, pagination=pagination)
 
 
 @main.route('/user/<username>')
@@ -104,13 +163,20 @@ def post(id):
     page = request.args.get('page', 1, type=int)
     if page == -1:
         page = (post.comments.count() - 1) / \
-            current_app.config['FLASKY_COMMENTS_PER_PAGE'] + 1
+               current_app.config['FLASKY_COMMENTS_PER_PAGE'] + 1
     pagination = post.comments.order_by(Comment.timestamp.asc()).paginate(
         page, per_page=current_app.config['FLASKY_COMMENTS_PER_PAGE'],
         error_out=False)
     comments = pagination.items
     return render_template('post.html', posts=[post], form=form,
                            comments=comments, pagination=pagination)
+
+
+@main.route('/ask', methods=['GET', 'POST'])
+@login_required
+def ask():
+    form = AskForm()
+    return render_template('ask.html', form=form)
 
 
 @main.route('/edit/<int:id>', methods=['GET', 'POST'])
@@ -200,7 +266,7 @@ def followed_by(username):
 @login_required
 def show_all():
     resp = make_response(redirect(url_for('.index')))
-    resp.set_cookie('show_followed', '', max_age=30*24*60*60)
+    resp.set_cookie('show_followed', '', max_age=30 * 24 * 60 * 60)
     return resp
 
 
@@ -208,7 +274,7 @@ def show_all():
 @login_required
 def show_followed():
     resp = make_response(redirect(url_for('.index')))
-    resp.set_cookie('show_followed', '1', max_age=30*24*60*60)
+    resp.set_cookie('show_followed', '1', max_age=30 * 24 * 60 * 60)
     return resp
 
 

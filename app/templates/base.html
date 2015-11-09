@@ -1,12 +1,13 @@
 {% extends "bootstrap/base.html" %}
-
 {% block title %}八斗{% endblock %}
-
 {% block head %}
     {{ super() }}
     <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/global.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/qa_all.css') }}">
+
 {% endblock %}
 
 {% block navbar %}
@@ -15,20 +16,28 @@
             <div class="navbar-header">
                 <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
                     <span class="sr-only">Toggle navigation</span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
+                    <span class="icon-bar">3</span>
+                    <span class="icon-bar">2</span>
+                    <span class="icon-bar">1</span>
                 </button>
-                <a class="navbar-brand">八斗网</a>
+                <a href="{{ url_for('main.index') }}" class="navbar-brand">八斗网</a>
             </div>
             <div class="navbar-collapse collapse">
-                <ul class="nav navbar-nav">
-                    <li><a href="{{ url_for('main.index') }}">首页</a></li>
-                    {% if current_user.is_authenticated() %}
-                        <li><a href="{{ url_for('main.user', username=current_user.username) }}">我的</a></li>
-                    {% endif %}
+                <ul class="nav navbar-nav navbar-left">
+                    <li class="menu__item">
+                        <a href="{{ url_for('main.index') }}">
+                            首页
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('main.topic') }}">话题</a>
+                    </li>
+                    <li>
+                        {% if current_user.is_authenticated() %}
+                            <li><a href="{{ url_for('main.user', username=current_user.username) }}">我的</a></li>
+                        {% endif %}
+                    </li>
                 </ul>
-
                 <ul class="nav navbar-nav navbar-right">
                     {% if current_user.can(Permission.MODERATE_COMMENTS) %}
                         <li><a href="{{ url_for('main.moderate') }}">管理评论</a></li>
@@ -36,7 +45,6 @@
                     {% if current_user.is_authenticated() %}
                         <li class="dropdown">
                             <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                                <img src="{{ current_user.gravatar(size=18) }}">
                                 账户 <b class="caret"></b>
                             </a>
                             <ul class="dropdown-menu">
@@ -49,6 +57,20 @@
                         <li><a href="{{ url_for('auth.login') }}">登录</a></li>
                     {% endif %}
                 </ul>
+                <div class="col-sm-3 col-md-3 pull-right">
+                    <form class="navbar-form" action="/search">
+                        <div class="input-group">
+                            <input type="text" class="form-control" placeholder="输入要搜索的问题" name="search"
+                                   id="search">
+
+                            <div class="input-group-btn">
+                                <button class="btn btn-default" type="submit">
+                                    <i class="glyphicon glyphicon-search" data-action="search"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
@@ -70,4 +92,5 @@
 {% block scripts %}
     {{ super() }}
     {{ moment.include_moment(local_js='/static/js/moment-with-locales.min.js') }}
+    {{ moment.locale('zh_CN') }}
 {% endblock %}

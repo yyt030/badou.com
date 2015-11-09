@@ -4,6 +4,9 @@ from app import create_app, db
 from app.models import User, Follow, Role, Permission, Post, Comment
 from flask.ext.script import Manager, Shell
 from flask.ext.migrate import Migrate, MigrateCommand
+from tornado.httpserver import HTTPServer
+from tornado.ioloop import IOLoop
+from tornado.wsgi import WSGIContainer
 
 app = create_app(os.getenv('FLASK_CONFIG') or 'default')
 manager = Manager(app)
@@ -13,6 +16,8 @@ migrate = Migrate(app, db)
 def make_shell_context():
     return dict(app=app, db=db, User=User, Follow=Follow, Role=Role,
                 Permission=Permission, Post=Post, Comment=Comment)
+
+
 manager.add_command("shell", Shell(make_context=make_shell_context))
 manager.add_command('db', MigrateCommand)
 
@@ -27,3 +32,6 @@ def test():
 
 if __name__ == '__main__':
     manager.run()
+    # server = HTTPServer(WSGIContainer(app))
+    # server.listen(80, address='127.0.0.1')
+    # IOLoop.current().start()
