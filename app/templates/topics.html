@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "_macros.html" as macros %}
+
+{% block title %}八斗{% endblock %}
+{% block page_content %}
+    {% include '_topics.html' %}
+    <div class="pagination">
+        {{ macros.pagination_widget(pagination, '.topic') }}
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    {{ pagedown.include_pagedown() }}
+{% endblock %}

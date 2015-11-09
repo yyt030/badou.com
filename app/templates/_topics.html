@@ -1,0 +1,18 @@
+<div class="container-fluid">
+    <ul class="clearfix">
+        {% for topic in topics %}
+            <li>
+                <a href="?{{ topic.name }}" id="{{ topic.id }}">
+                    {{ topic.name }}
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+    <ul>
+        {% for topic in topics %}
+            <a href="{{ url_for('.topic', id=topic.id) }}#topic">
+                <span class="label label-success">{{ topic.name }}</span>
+            </a>
+        {% endfor %}
+    </ul>
+</div>
