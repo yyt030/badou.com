@@ -9,12 +9,12 @@
               method="post" action="/">
             {{ wtf.form_field(form.title) }}
             {{ wtf.form_field(form.tag) }}
-            <div class="form-group">
-                <label for="name">问题详细描述</label>
-                {% include '_editor.html' %}
-            </div>
             <div class="form-actions">
-                <button name="action_save" type="submit" class="btn btn-primary">提交问题</button>
+                <label>问题详细描述</label>
+                {% include '_editor.html' %}
+                <div class="form-actions">
+                    <button name="action_save" type="submit" class="btn btn-primary">提交问题</button>
+                </div>
             </div>
         </form>
     </div>

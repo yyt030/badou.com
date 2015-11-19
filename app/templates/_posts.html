@@ -6,12 +6,13 @@
                     0
                     <small>投票</small>
                 </div>
-                <div class="answers">
+                <div {% if post.comments.count() %}class="answers hidden-xs" {% else %}
+                     class="votes hidden-xs" {% endif %}>
                     {{ post.comments.count() }}
                     <small>回答</small>
                 </div>
                 <div class="views hidden-xs">
-                    50
+                    {{ post.views }}
                     <small>浏览</small>
                 </div>
             </div>
@@ -51,7 +52,6 @@
                             </li>
                         </ul>
                     </div>
-
                 </div>
             </div>
         </section>

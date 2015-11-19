@@ -44,8 +44,76 @@ def index():
         1, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'] * 5,
         error_out=False)
     topics = topic_pagination.items
-
     return render_template('index.html', form=form, search_form=g.search_form, posts=posts, topics=topics,
+                           show_followed=show_followed, pagination=pagination)
+
+
+@main.route('/hottest', methods=['GET', 'POST'])
+def hottest():
+    form = PostForm()
+    if current_user.can(Permission.WRITE_ARTICLES) and \
+            form.validate_on_submit():
+        post = Post(body=form.body.data,
+                    author=current_user._get_current_object())
+        db.session.add(post)
+        return redirect(url_for('.index'))
+    page = request.args.get('page', 1, type=int)
+    show_followed = False
+    if current_user.is_authenticated():
+        show_followed = bool(request.cookies.get('show_followed', ''))
+    if show_followed:
+        query = current_user.followed_posts
+    else:
+        query = Post.query
+
+    pagination = query.order_by(Post.views.desc()).paginate(
+        page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'],
+        error_out=False)
+    posts = pagination.items
+
+    # list topic
+    topic_query = Topic.query.filter(Topic.id == TopicMapping.topic_id)
+    topic_pagination = topic_query.order_by(Topic.add_time.asc()).paginate(
+        1, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'] * 5,
+        error_out=False)
+    topics = topic_pagination.items
+    return render_template('hottest.html', form=form, search_form=g.search_form, posts=posts, topics=topics,
+                           show_followed=show_followed, pagination=pagination)
+
+
+@main.route('/unanswer', methods=['GET', 'POST'])
+def unanswer():
+    form = PostForm()
+    if current_user.can(Permission.WRITE_ARTICLES) and \
+            form.validate_on_submit():
+        post = Post(body=form.body.data,
+                    author=current_user._get_current_object())
+        db.session.add(post)
+        return redirect(url_for('.index'))
+    page = request.args.get('page', 1, type=int)
+    show_followed = False
+    if current_user.is_authenticated():
+        show_followed = bool(request.cookies.get('show_followed', ''))
+    if show_followed:
+        query = current_user.followed_posts
+    else:
+        query = Post.query
+    print query.filter(Post.comments).count()
+    print type(Post.comments)
+
+    pagination = query.order_by(Post.timestamp.desc()).paginate(
+        page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'],
+        error_out=False)
+    posts = pagination.items
+
+    # list topic
+    topic_query = Topic.query.filter(Topic.id == TopicMapping.topic_id)
+    topic_pagination = topic_query.order_by(Topic.add_time.asc()).paginate(
+        1, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'] * 5,
+        error_out=False)
+    topics = topic_pagination.items
+
+    return render_template('unanswer.html', form=form, search_form=g.search_form, posts=posts, topics=topics,
                            show_followed=show_followed, pagination=pagination)
 
 
@@ -137,7 +205,7 @@ def edit_profile_admin(id):
         user.location = form.location.data
         user.about_me = form.about_me.data
         db.session.add(user)
-        flash('The profile has been updated.')
+        flash(u'profile已更新.')
         return redirect(url_for('.user', username=user.username))
     form.email.data = user.email
     form.username.data = user.username
@@ -158,12 +226,18 @@ def post(id):
                           post=post,
                           author=current_user._get_current_object())
         db.session.add(comment)
-        flash('Your comment has been published.')
+        flash(u'回复已发布.')
         return redirect(url_for('.post', id=post.id, page=-1))
+
     page = request.args.get('page', 1, type=int)
+    if page == 1:
+        post.views += 1
+        db.session.add(post)
+
     if page == -1:
         page = (post.comments.count() - 1) / \
                current_app.config['FLASKY_COMMENTS_PER_PAGE'] + 1
+
     pagination = post.comments.order_by(Comment.timestamp.asc()).paginate(
         page, per_page=current_app.config['FLASKY_COMMENTS_PER_PAGE'],
         error_out=False)

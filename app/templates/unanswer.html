@@ -14,13 +14,13 @@
 
     <div class="post-tabs">
         <ul class="nav nav-tabs nav-tabs-zen mb10">
-            <li class="active">
+            <li>
                 <a href="/">最新的</a>
             </li>
             <li>
                 <a href="/hottest">热门的</a>
             </li>
-            <li>
+            <li class="active">
                 <a href="/unanswer">未回答</a>
             </li>
             {#            {% if current_user.is_authenticated() %}#}
@@ -35,7 +35,7 @@
             {% if search_data %}
                 {{ macros.pagination_widget(pagination, '.search', '&search=%s' %(search_data)) }}
             {% else %}
-                {{ macros.pagination_widget(pagination, '.index') }}
+                {{ macros.pagination_widget(pagination, '.unanswer') }}
             {% endif %}
         </div>
     {% endif %}
